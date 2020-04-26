@@ -1,20 +1,20 @@
 from watchdog.events import RegexMatchingEventHandler
 
 
-def EpubFilesHandler():
+def EpubFilesHandler(on_new_file):
     def on_created(event):
-        src_path = event.src_path
-        print(f"[CREATED] {src_path}")
+        on_new_file(event.src_path)
     handler = RegexMatchingEventHandler(regexes=[r".*[.]epub"])
     handler.on_created = on_created
     return handler
 
 
-def KindleConnectionHandler():
-    def on_any_event(event):
-        type = event.event_type
-        src_path = event.src_path
-        print(f"[{type}] {src_path}")
+def KindleConnectionHandler(on_connect, on_disconnect):
+    def on_created(_):
+        on_connect()
+    def on_deleted(_):
+        on_disconnect()
     handler = RegexMatchingEventHandler(regexes=[r".*/Kindle"])
-    handler.on_any_event = on_any_event
+    handler.on_created = on_created
+    handler.on_deleted = on_deleted
     return handler
