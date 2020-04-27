@@ -1,7 +1,8 @@
 import os
 from store import Store
 from observer_runner import ObserverRunner
-from event_handlers import EpubFilesHandler, KindleConnectionHandler
+from event_handlers import EpubFilesHandler, push_new_files, KindleConnectionHandler, push_connection_statuses
+import rx
 from watchdog.observers import Observer
 
 
@@ -45,25 +46,19 @@ def on_each():
 
 store.subscribe(on_each)
 
-def on_new_file(path):
-    store.dispatch(dict(type='NEW_FILE', path=path))
-
-
-def on_connect():
-    store.dispatch(dict(type='CONNECTED'))
-
-
-def on_disconnect():
-    store.dispatch(dict(type='DISCONNECTED'))
-
 
 observer = Observer()
+epub_handler = EpubFilesHandler()
+kindle_handler = KindleConnectionHandler()
+new_files = rx.create(push_new_files(epub_handler))
+connection_statuses = rx.create(push_connection_statuses(kindle_handler))
+rx.merge(new_files, connection_statuses).subscribe(lambda action: store.dispatch(action))
 observer.schedule(
     path=os.path.join(os.environ["HOME"], "Desktop", "To Be Synced"),
-    event_handler=EpubFilesHandler(on_new_file)
+    event_handler=epub_handler
 )
 observer.schedule(
     path='/Volumes',
-    event_handler=KindleConnectionHandler(on_connect, on_disconnect)
+    event_handler=kindle_handler
 )
 ObserverRunner().runObserver(observer)
