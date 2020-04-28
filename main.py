@@ -54,15 +54,15 @@ store.subscribe(on_each)
 
 
 def mapToConvertedFile(new_file):
-    def change_extension_to_epub(path):
-        return f"{os.path.splitext(path)[0]}.epub"
+    def change_extension_to_mobi(path):
+        return f"{os.path.splitext(path)[0]}.mobi"
 
     def push_converted_files(observer, scheduler):
         src_path = new_file['path']
         subprocess.run([paths.KINDLEGEN, src_path],cwd=paths.BUCKET)
         subprocess.run(['rm', src_path])
         observer.on_next(
-            {**new_file, **{'path': change_extension_to_epub(src_path)}})
+            {**new_file, **{'path': change_extension_to_mobi(src_path)}})
         observer.on_completed()
     return rx.create(push_converted_files)
 
