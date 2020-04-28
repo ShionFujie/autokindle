@@ -3,7 +3,8 @@ import subprocess
 from constants import paths
 from store import Store
 from observer_runner import ObserverRunner
-from event_handlers import EpubFilesHandler, push_new_files, KindleConnectionHandler, push_connection_statuses
+from event_handlers import EpubFilesHandler, KindleConnectionHandler
+from observables import new_files, connection_statuses
 import rx
 from rx import operators
 from watchdog.observers import Observer
@@ -52,30 +53,12 @@ def on_each():
 
 store.subscribe(on_each)
 
-
-def mapToConvertedFile(new_file):
-    def change_extension_to_mobi(path):
-        return f"{os.path.splitext(path)[0]}.mobi"
-
-    def push_converted_files(observer, scheduler):
-        src_path = new_file['path']
-        subprocess.run([paths.KINDLEGEN, src_path],cwd=paths.BUCKET)
-        subprocess.run(['rm', src_path])
-        observer.on_next(
-            {**new_file, **{'path': change_extension_to_mobi(src_path)}})
-        observer.on_completed()
-    return rx.create(push_converted_files)
-
-
-observer = Observer()
 epub_handler = EpubFilesHandler()
 kindle_handler = KindleConnectionHandler()
-new_files = rx.create(push_new_files(epub_handler)).pipe(
-    operators.flat_map(mapToConvertedFile)
-)
-connection_statuses = rx.create(push_connection_statuses(kindle_handler))
-rx.merge(new_files, connection_statuses).subscribe(
+rx.merge(new_files(epub_handler), connection_statuses(kindle_handler)).subscribe(
     lambda action: store.dispatch(action))
+
+observer = Observer()
 observer.schedule(
     path=paths.BUCKET,
     event_handler=epub_handler
