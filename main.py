@@ -43,28 +43,25 @@ def reducer(state=State(), action=None):
     else:
         return state
 
-
-store = Store(reducer)
-
-
 def on_each():
     print(store.getState().__dict__)
 
+def start_watching(epub_handler, kindle_handler):
+    observer = Observer()
+    observer.schedule(
+        path=paths.BUCKET,
+        event_handler=epub_handler
+    )
+    observer.schedule(
+        path=paths.VOLUMES,
+        event_handler=kindle_handler
+    )
+    ObserverRunner().runObserver(observer)
 
+store = Store(reducer)
 store.subscribe(on_each)
-
 epub_handler = EpubFilesHandler()
 kindle_handler = KindleConnectionHandler()
 rx.merge(new_files(epub_handler), connection_statuses(kindle_handler)).subscribe(
     lambda action: store.dispatch(action))
-
-observer = Observer()
-observer.schedule(
-    path=paths.BUCKET,
-    event_handler=epub_handler
-)
-observer.schedule(
-    path=paths.VOLUMES,
-    event_handler=kindle_handler
-)
-ObserverRunner().runObserver(observer)
+start_watching(epub_handler, kindle_handler)
