@@ -1,38 +1,31 @@
 import os
 import subprocess
 import rx
+from rx.subject import Subject
 from rx import operators
+
 from constants import paths
 
 
 def new_files(epub_handler):
-    return rx.create(_push_new_files(epub_handler)).pipe(
+    subject = Subject()
+    def on_created(event):
+            subject.on_next(event.src_path)
+    epub_handler.on_created = on_created
+    return subject.pipe(
         operators.flat_map(_mapToConvertedFile)
     )
 
 
 def connection_statuses(kindle_handler):
-    return rx.create(_push_connection_statuses(kindle_handler))
-
-
-def _push_new_files(watchdog_handler):
-    def _(observer, scheduler):
-        def on_created(event):
-            observer.on_next(event.src_path)
-        watchdog_handler.on_created = on_created
-    return _
-
-
-def _push_connection_statuses(watchdog_handler):
-    def _(observer, scheduler):
-        def on_created(_):
-            observer.on_next(dict(type='CONNECTED'))
-
-        def on_deleted(_):
-            observer.on_next(dict(type='DISCONNECTED'))
-        watchdog_handler.on_created = on_created
-        watchdog_handler.on_deleted = on_deleted
-    return _
+    subject = Subject()
+    def on_created(_):
+        subject.on_next(dict(type='CONNECTED'))
+    def on_deleted(_):
+        subject.on_next(dict(type='DISCONNECTED'))
+    kindle_handler.on_created = on_created
+    kindle_handler.on_deleted = on_deleted
+    return subject
 
 
 def _mapToConvertedFile(src_path):
