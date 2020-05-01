@@ -9,5 +9,3 @@ def EpubFilesHandler():
 def KindleConnectionHandler():
     handler = RegexMatchingEventHandler(regexes=[r".*/Kindle"])
     return handler
-
-
