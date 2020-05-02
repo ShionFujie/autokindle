@@ -4,7 +4,7 @@ from constants import paths
 from store import Store
 from observer_runner import ObserverRunner
 from event_handlers import EpubFilesHandler, KindleConnectionHandler
-from observables import new_files, connection_statuses
+from observables import new_files, connection_statuses, failed_transfers
 import rx
 from rx.subject import Subject
 from rx import operators
@@ -55,27 +55,12 @@ def reducer(state=State(), action=None):
         return state
 
 
-def _transfer_file(file):
-    result = subprocess.run([f"mv '{file}' {paths.KINDLE_DOCUMENTS}"], shell=True, stderr=subprocess.DEVNULL)
-    if (result.returncode == 0):
-        return dict(is_successful=True)
-    else: 
-        return dict(is_successful=False, type='TRANSFER_FAILED', path=file)
-        
-
-
-subject = Subject()
-failed_transfers = subject.pipe(
-    operators.map(lambda paths: rx.from_iterable(paths)),
-    operators.merge_all(),
-    operators.map(_transfer_file),
-    operators.filter(lambda result: not result['is_successful']),
-)
+proccessing_files = Subject()
 
 def transfer_files():
     state = store.getState()
     if (state.processing):
-        subject.on_next(state.processing)
+        proccessing_files.on_next(state.processing)
 
 
 def on_each():
@@ -103,6 +88,6 @@ kindle_handler = KindleConnectionHandler()
 rx.merge(
     new_files(epub_handler),
     connection_statuses(kindle_handler),
-    failed_transfers,
+    failed_transfers(proccessing_files),
 ).subscribe(lambda action: store.dispatch(action))
 start_watching(epub_handler, kindle_handler)
