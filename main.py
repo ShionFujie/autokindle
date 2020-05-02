@@ -6,14 +6,16 @@ from observer_runner import ObserverRunner
 from event_handlers import EpubFilesHandler, KindleConnectionHandler
 from observables import new_files, connection_statuses
 import rx
+from rx.subject import Subject
 from rx import operators
 from watchdog.observers import Observer
 
 
 class State:
-    def __init__(self, paths=[], is_connected=False):
+    def __init__(self, paths=[], is_connected=False, processing=[]):
         self.paths = paths
         self.is_connected = is_connected
+        self.processing = processing
 
     def is_idle(self):
         return not self.paths and not self.is_connected
@@ -27,24 +29,58 @@ class State:
     def is_syncing(self):
         return self.paths and self.is_connected
 
-    def copy(self, **updates):
-        return State(**{**self.__dict__, **updates})
+    def copy(self, processing=[], **updates):
+        return State(**{**self.__dict__, **updates, 'processing': processing})
 
 
 def reducer(state=State(), action=None):
     if action is None:
         return state
     if action['type'] == 'NEW_FILE':
-        return state.copy(paths=[*state.paths, action['path']])
+        if (state.is_connected):
+            return state.copy(processing=[action['path']])
+        else:
+            return state.copy(paths=[*state.paths, action['path']])
     elif action['type'] == 'CONNECTED':
-        return state.copy(is_connected=True)
+        return State(is_connected=True, paths=[], processing=state.paths)
     elif action['type'] == 'DISCONNECTED':
         return state.copy(is_connected=False)
+    elif action['type'] == 'TRANSFER_FAILED':
+        if (state.is_connected):
+            return state.copy(processing=[action['path']])
+        else:
+            return state.copy(paths=[*state.paths, action['path']])
+        return
     else:
         return state
 
+
+def _transfer_file(file):
+    result = subprocess.run([f"mv '{file}' {paths.KINDLE_DOCUMENTS}"], shell=True, stderr=subprocess.DEVNULL)
+    if (result.returncode == 0):
+        return dict(is_successful=True)
+    else: 
+        return dict(is_successful=False, type='TRANSFER_FAILED', path=file)
+        
+
+
+subject = Subject()
+failed_transfers = subject.pipe(
+    operators.map(lambda paths: rx.from_iterable(paths)),
+    operators.merge_all(),
+    operators.map(_transfer_file),
+    operators.filter(lambda result: not result['is_successful']),
+)
+
+def transfer_files():
+    state = store.getState()
+    if (state.processing):
+        subject.on_next(state.processing)
+
+
 def on_each():
     print(store.getState().__dict__)
+
 
 def start_watching(epub_handler, kindle_handler):
     observer = Observer()
@@ -58,10 +94,15 @@ def start_watching(epub_handler, kindle_handler):
     )
     ObserverRunner().runObserver(observer)
 
+
 store = Store(reducer)
 store.subscribe(on_each)
+store.subscribe(transfer_files)
 epub_handler = EpubFilesHandler()
 kindle_handler = KindleConnectionHandler()
-rx.merge(new_files(epub_handler), connection_statuses(kindle_handler)).subscribe(
-    lambda action: store.dispatch(action))
+rx.merge(
+    new_files(epub_handler),
+    connection_statuses(kindle_handler),
+    failed_transfers,
+).subscribe(lambda action: store.dispatch(action))
 start_watching(epub_handler, kindle_handler)
