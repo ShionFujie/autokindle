@@ -43,8 +43,7 @@ def failed_transfers(store):
     return proccessing_files.pipe(
         operators.map(lambda paths: rx.from_iterable(paths)),
         operators.merge_all(),
-        operators.map(_transfer_file),
-        operators.filter(lambda result: not result['is_successful']),
+        operators.flat_map(_transfer_file),
     )
 
 
@@ -62,10 +61,10 @@ def _mapToConvertedFile(src_path):
     return rx.create(push_converted_files)
 
 
-def _transfer_file(file):
+def _transfer_file(path):
     result = subprocess.run(
-        [f"mv '{file}' {paths.KINDLE_DOCUMENTS}"], shell=True, stderr=subprocess.DEVNULL)
+        [f"mv '{path}' {paths.KINDLE_DOCUMENTS}"], shell=True, stderr=subprocess.DEVNULL)
     if (result.returncode == 0):
-        return dict(is_successful=True)
+        return rx.empty()
     else:
-        return dict(is_successful=False, type='TRANSFER_FAILED', path=file)
+        return rx.of(actions.FailedTransfer(path))
