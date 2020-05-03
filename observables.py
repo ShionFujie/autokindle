@@ -32,13 +32,21 @@ def connection_statuses(kindle_handler):
     return subject
 
 
-def failed_transfers(bulks_of_paths):
-    bulks_of_paths.pipe(
+def failed_transfers(store):
+    proccessing_files = Subject()
+
+    def transfer_files():
+        state = store.getState()
+        if (state.processing):
+            proccessing_files.on_next(state.processing)
+    store.subscribe(transfer_files)
+    return proccessing_files.pipe(
         operators.map(lambda paths: rx.from_iterable(paths)),
         operators.merge_all(),
         operators.map(_transfer_file),
         operators.filter(lambda result: not result['is_successful']),
     )
+
 
 def _mapToConvertedFile(src_path):
     def change_extension_to_mobi(path):
@@ -53,9 +61,11 @@ def _mapToConvertedFile(src_path):
         observer.on_completed()
     return rx.create(push_converted_files)
 
+
 def _transfer_file(file):
-    result = subprocess.run([f"mv '{file}' {paths.KINDLE_DOCUMENTS}"], shell=True, stderr=subprocess.DEVNULL)
+    result = subprocess.run(
+        [f"mv '{file}' {paths.KINDLE_DOCUMENTS}"], shell=True, stderr=subprocess.DEVNULL)
     if (result.returncode == 0):
         return dict(is_successful=True)
-    else: 
+    else:
         return dict(is_successful=False, type='TRANSFER_FAILED', path=file)

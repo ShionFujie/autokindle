@@ -55,14 +55,6 @@ def reducer(state=State(), action=None):
         return state
 
 
-proccessing_files = Subject()
-
-def transfer_files():
-    state = store.getState()
-    if (state.processing):
-        proccessing_files.on_next(state.processing)
-
-
 def on_each():
     print(store.getState().__dict__)
 
@@ -82,12 +74,11 @@ def start_watching(epub_handler, kindle_handler):
 
 store = Store(reducer)
 store.subscribe(on_each)
-store.subscribe(transfer_files)
 epub_handler = EpubFilesHandler()
 kindle_handler = KindleConnectionHandler()
 rx.merge(
     new_files(epub_handler),
     connection_statuses(kindle_handler),
-    failed_transfers(proccessing_files),
+    failed_transfers(store),
 ).subscribe(lambda action: store.dispatch(action))
 start_watching(epub_handler, kindle_handler)
