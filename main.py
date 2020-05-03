@@ -3,7 +3,7 @@ import subprocess
 from constants import paths
 from store import Store
 from observer_runner import ObserverRunner
-from event_handlers import EpubFilesHandler, KindleConnectionHandler
+from event_handlers import FileHandler, KindleConnectionHandler
 from observables import new_files, connection_statuses, failed_transfers
 import rx
 from rx.subject import Subject
@@ -74,11 +74,11 @@ def start_watching(epub_handler, kindle_handler):
 
 store = Store(reducer)
 store.subscribe(on_each)
-epub_handler = EpubFilesHandler()
+file_handler = FileHandler()
 kindle_handler = KindleConnectionHandler()
 rx.merge(
-    new_files(epub_handler),
+    new_files(file_handler),
     connection_statuses(kindle_handler),
     failed_transfers(store),
 ).subscribe(lambda action: store.dispatch(action))
-start_watching(epub_handler, kindle_handler)
+start_watching(file_handler, kindle_handler)

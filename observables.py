@@ -15,7 +15,7 @@ def new_files(epub_handler):
         subject.on_next(event.src_path)
     epub_handler.on_created = on_created
     return subject.pipe(
-        operators.flat_map(_mapToConvertedFile)
+        operators.flat_map(_convert_file_if_necessary)
     )
 
 
@@ -47,7 +47,10 @@ def failed_transfers(store):
     )
 
 
-def _mapToConvertedFile(src_path):
+def _convert_file_if_necessary(src_path):
+    def get_extension(path):
+        return os.path.splitext(path)[1]
+
     def change_extension_to_mobi(path):
         return f"{os.path.splitext(path)[0]}.mobi"
 
@@ -58,7 +61,11 @@ def _mapToConvertedFile(src_path):
         observer.on_next(actions.NewFile(
             path=change_extension_to_mobi(src_path)))
         observer.on_completed()
-    return rx.create(push_converted_files)
+    ext = get_extension(src_path)
+    if ext == ".epub":
+        return rx.create(push_converted_files)
+    else:
+        return rx.of(actions.NewFile(src_path))
 
 
 def _transfer_file(path):
