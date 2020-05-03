@@ -1,8 +1,8 @@
 from watchdog.events import RegexMatchingEventHandler
 
 
-def EpubFilesHandler():
-    handler = RegexMatchingEventHandler(regexes=[r".*[.]epub"])
+def FileHandler():
+    handler = RegexMatchingEventHandler(regexes=[r".*[.](epub|pdf)"])
     return handler
 
 
