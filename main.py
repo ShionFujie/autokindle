@@ -1,5 +1,6 @@
 import os
 import subprocess
+import logging
 from constants import paths
 from store import Store
 from observer_runner import ObserverRunner
@@ -9,6 +10,14 @@ import rx
 from rx.subject import Subject
 from rx import operators
 from watchdog.observers import Observer
+
+
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='%(asctime)s %(process)d/%(module)s %(levelname)s/%(name)s: %(message)s', 
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
+logger = logging.getLogger('main')
 
 
 class State:
@@ -56,7 +65,7 @@ def reducer(state=State(), action=None):
 
 
 def on_each():
-    print(store.getState().__dict__)
+    logger.debug(store.getState().__dict__)
 
 
 def start_watching(epub_handler, kindle_handler):
