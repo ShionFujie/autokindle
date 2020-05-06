@@ -7,6 +7,7 @@ class ObserverRunner:
 
     def runObserver(self, observer):
         observer.start()
+        self.logger.info('Observer started')
         self._run_until_interrupted(self._OnInterruptedListener(observer))
         observer.join()
 
