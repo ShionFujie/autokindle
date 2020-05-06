@@ -1,6 +1,7 @@
 import os
 import subprocess
 import logging
+from autokindle.logging import getLogger, setupLogging
 from constants import paths
 from store import Store
 from observer_runner import ObserverRunner
@@ -12,12 +13,8 @@ from rx import operators
 from watchdog.observers import Observer
 
 
-logging.basicConfig(
-    level=logging.DEBUG,
-    format='%(asctime)s %(process)d/%(module)s %(levelname)s/%(name)s: %(message)s', 
-    datefmt='%Y-%m-%d %H:%M:%S'
-)
-logger = logging.getLogger('main')
+setupLogging()
+logger = getLogger(__name__, 'main')
 
 
 class State:

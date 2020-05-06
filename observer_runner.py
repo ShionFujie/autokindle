@@ -1,8 +1,9 @@
 import time
-import logging
+from autokindle.logging import getLogger
+
 
 class ObserverRunner:
-    logger = logging.getLogger('ObserverRunner')
+    logger = getLogger(__name__, 'ObserverRunner')
 
     def runObserver(self, observer):
         observer.start()
