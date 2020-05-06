@@ -1,12 +1,11 @@
 import os
 import subprocess
-import logging
+from autokindle.constants import paths
 from autokindle.logging import getLogger, setupLogging
-from constants import paths
-from store import Store
-from observer_runner import ObserverRunner
-from event_handlers import FileHandler, KindleConnectionHandler
-from observables import new_files, connection_statuses, failed_transfers
+from autokindle.store import Store
+from autokindle.observer_runner import ObserverRunner
+from autokindle.event_handlers import FileHandler, KindleConnectionHandler
+from autokindle.observables import new_files, connection_statuses, failed_transfers
 import rx
 from rx.subject import Subject
 from rx import operators
