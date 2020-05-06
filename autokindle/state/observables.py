@@ -3,9 +3,8 @@ import subprocess
 import rx
 from rx.subject import Subject
 from rx import operators
-import actions
-
-from constants import paths
+from autokindle.state import actions
+from autokindle.constants import paths
 
 
 def new_files(epub_handler):
