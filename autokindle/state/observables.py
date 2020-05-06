@@ -3,8 +3,7 @@ import subprocess
 import rx
 from rx.subject import Subject
 from rx import operators
-from autokindle import actions
-
+from autokindle.state import actions
 from autokindle.constants import paths
 
 

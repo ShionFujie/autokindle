@@ -2,10 +2,10 @@ import os
 import subprocess
 from autokindle.constants import paths
 from autokindle.logging import getLogger, setupLogging
-from autokindle.store import Store
+from autokindle.state import Store, reducer
 from autokindle.watchdog.observer_runner import ObserverRunner
 from autokindle.watchdog.handlers import FileHandler, KindleConnectionHandler
-from autokindle.observables import new_files, connection_statuses, failed_transfers
+from autokindle.state.observables import new_files, connection_statuses, failed_transfers
 import rx
 from rx.subject import Subject
 from rx import operators
@@ -14,50 +14,6 @@ from watchdog.observers import Observer
 
 setupLogging()
 logger = getLogger(__name__, 'main')
-
-
-class State:
-    def __init__(self, paths=[], is_connected=False, processing=[]):
-        self.paths = paths
-        self.is_connected = is_connected
-        self.processing = processing
-
-    def is_idle(self):
-        return not self.paths and not self.is_connected
-
-    def needs_sync(self):
-        return self.paths and not self.is_connected
-
-    def awaits_files(self):
-        return not self.paths and self.is_connected
-
-    def is_syncing(self):
-        return self.paths and self.is_connected
-
-    def copy(self, processing=[], **updates):
-        return State(**{**self.__dict__, **updates, 'processing': processing})
-
-
-def reducer(state=State(), action=None):
-    if action is None:
-        return state
-    if action['type'] == 'CONNECTED':
-        return State(is_connected=True, paths=[], processing=state.paths)
-    elif action['type'] == 'DISCONNECTED':
-        return state.copy(is_connected=False)
-    elif action['type'] == 'NEW_FILE':
-        if (state.is_connected):
-            return state.copy(processing=[action['path']])
-        else:
-            return state.copy(paths=[*state.paths, action['path']])
-    elif action['type'] == 'TRANSFER_FAILED':
-        if (state.is_connected):
-            return state.copy(processing=[action['path']])
-        else:
-            return state.copy(paths=[*state.paths, action['path']])
-        return
-    else:
-        return state
 
 
 def on_each():
