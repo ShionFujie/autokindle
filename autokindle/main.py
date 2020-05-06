@@ -3,8 +3,8 @@ import subprocess
 from autokindle.constants import paths
 from autokindle.logging import getLogger, setupLogging
 from autokindle.store import Store
-from autokindle.observer_runner import ObserverRunner
-from autokindle.event_handlers import FileHandler, KindleConnectionHandler
+from autokindle.watchdog.observer_runner import ObserverRunner
+from autokindle.watchdog.handlers import FileHandler, KindleConnectionHandler
 from autokindle.observables import new_files, connection_statuses, failed_transfers
 import rx
 from rx.subject import Subject
