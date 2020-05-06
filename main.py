@@ -1,5 +1,7 @@
 import os
 import subprocess
+import logging
+from autokindle.logging import getLogger, setupLogging
 from constants import paths
 from store import Store
 from observer_runner import ObserverRunner
@@ -9,6 +11,10 @@ import rx
 from rx.subject import Subject
 from rx import operators
 from watchdog.observers import Observer
+
+
+setupLogging()
+logger = getLogger(__name__, 'main')
 
 
 class State:
@@ -56,7 +62,7 @@ def reducer(state=State(), action=None):
 
 
 def on_each():
-    print(store.getState().__dict__)
+    logger.debug(store.getState().__dict__)
 
 
 def start_watching(epub_handler, kindle_handler):
