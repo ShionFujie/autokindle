@@ -1,6 +1,9 @@
 import time
+import logging
 
 class ObserverRunner:
+    logger = logging.getLogger('ObserverRunner')
+
     def runObserver(self, observer):
         observer.start()
         self._run_until_interrupted(self._OnInterruptedListener(observer))
@@ -16,5 +19,5 @@ class ObserverRunner:
     def _OnInterruptedListener(self, observer):
         def onInterrupted():
             observer.stop()
-            print("observer stopped")
+            self.logger.info("Observer stopped")
         return onInterrupted
