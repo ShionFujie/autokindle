@@ -6,6 +6,12 @@ from rx import operators
 from autokindle.state import actions
 from autokindle.constants import paths
 
+def initialize():
+    def _(emitter, _):
+        is_connected = os.path.isdir(paths.KINDLE_DOCUMENTS)
+        emitter.on_next(actions.Initialize(is_connected))
+        emitter.on_completed()
+    return rx.create(_)
 
 def new_files(epub_handler):
     subject = Subject()
