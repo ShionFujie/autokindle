@@ -4,7 +4,10 @@ def reducer(state=State(), action=None):
     type =  action['type'] if action else None
 
     if type == 'INITIALIZE':
-        return State(is_connected=action['is_connected'])
+        is_connected = action['is_connected']
+        paths = action['paths'] if not is_connected else []
+        processing = action['paths'] if is_connected else []
+        return State(is_connected=is_connected, paths=paths, processing=processing)
     elif type == 'CONNECTED':
         return State(is_connected=True, paths=[], processing=state.paths)
     elif type == 'DISCONNECTED':

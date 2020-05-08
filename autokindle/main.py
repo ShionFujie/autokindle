@@ -28,4 +28,5 @@ rx.concat(
         failed_transfers(store),
     )
 ).subscribe(lambda action: store.dispatch(action))
+logger.debug('Subscribed')
 start_watching(file_handler, kindle_handler)
