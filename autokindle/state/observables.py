@@ -9,9 +9,12 @@ from autokindle.constants import paths
 
 
 def initialize():
+    def convert_if_necessary(path):
+        _convert_to_mobi(path) if path.endswith(".epub") else path
+
     def _(emitter, _):
         is_connected = os.path.isdir(paths.KINDLE_DOCUMENTS)
-        file_paths = [_convert_to_mobi(os.path.join(paths.BUCKET, path)) if path.endswith(".epub") else os.path.join(paths.BUCKET, path)
+        file_paths = [os.path.join(paths.BUCKET, convert_if_necessary(path))
                       for path in os.listdir(paths.BUCKET) if path.endswith((".pdf", ".mobi", ".epub"))]
         emitter.on_next(actions.Initialize(is_connected, file_paths))
         emitter.on_completed()
