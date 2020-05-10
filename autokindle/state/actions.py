@@ -1,3 +1,5 @@
+def Initialize(is_connected, paths):
+    return dict(type='INITIALIZE', is_connected=is_connected, paths=paths)
 
 def Connected():
     return dict(type='CONNECTED')
