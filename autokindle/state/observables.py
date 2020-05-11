@@ -10,11 +10,11 @@ from autokindle.constants import paths
 
 def initialize():
     def convert_if_necessary(path):
-        _convert_to_mobi(path) if path.endswith(".epub") else path
+        return _convert_to_mobi(path) if path.endswith(".epub") else path
 
     def _(emitter, _):
         is_connected = os.path.isdir(paths.KINDLE_DOCUMENTS)
-        file_paths = [os.path.join(paths.BUCKET, convert_if_necessary(path))
+        file_paths = [convert_if_necessary(os.path.join(paths.BUCKET, path))
                       for path in os.listdir(paths.BUCKET) if path.endswith((".pdf", ".mobi", ".epub"))]
         emitter.on_next(actions.Initialize(is_connected, file_paths))
         emitter.on_completed()
@@ -78,7 +78,7 @@ def _convert_to_mobi(src_path):
     def change_extension_to_mobi(path):
         return f"{os.path.splitext(path)[0]}.mobi"
     subprocess.run([paths.KINDLEGEN, src_path],
-                   cwd=paths.BUCKET, stdout=subprocess.DEVNULL)
+                    cwd=paths.BUCKET, stdout=subprocess.DEVNULL)
     subprocess.run(['rm', src_path])
     return change_extension_to_mobi(src_path)
 
