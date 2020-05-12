@@ -1,6 +1,6 @@
 import os
 import subprocess
-from autokindle.logging import getLogger, setupLogging
+from autokindle.logging import getLogger
 from autokindle.state import Store, reducer
 from autokindle.watchdog.handlers import FileHandler, KindleConnectionHandler
 from autokindle.watchdog import start_watching
@@ -8,7 +8,6 @@ from autokindle.state.observables import initialize, new_files, connection_statu
 import rx
 
 
-setupLogging()
 logger = getLogger(__name__, 'main')
 
 
