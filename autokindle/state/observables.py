@@ -32,12 +32,12 @@ def _initialize():
     return rx.create(_)
 
 
-def _new_files(epub_handler):
+def _new_files(file_handler):
     subject = Subject()
 
     def on_created(event):
         subject.on_next(event.src_path)
-    epub_handler.on_created = on_created
+    file_handler.on_created = on_created
     return subject.pipe(
         operators.flat_map(_convert_file_if_necessary)
     )
